@@ -1,0 +1,58 @@
+# 依赖目录
+node_modules/
+
+# 编译输出目录
+dist/
+dist-ssr/
+*.local
+
+# 缓存目录
+/.vite/
+/.cache/
+/.temp/
+
+# macOS
+.DS_Store
+
+# IDE 配置
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# TypeScript 编译信息
+*.tsbuildinfo
+
+# 测试报告
+coverage/
+jest-results.json
+
+# 编辑器临时文件
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 打包配置文件
+*.zip
+*.tar
+*.tar.gz
+
+# Tailwind CSS 配置生成的文件
+/tailwind.config.js
+/postcss.config.js
+
+# 其他
+/*.txt

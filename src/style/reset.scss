@@ -1,0 +1,206 @@
+*,
+::before,
+::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+  box-sizing: border-box;
+}
+
+#app,
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+html {
+  box-sizing: border-box;
+  line-height: 1.5;
+  tab-size: 4; /** 定义制表符宽度 */
+  text-size-adjust: 100%; /** 禁用文字自动调整大小 */
+}
+
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  line-height: inherit;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+small {
+  font-size: 80%;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 100%;
+  line-height: inherit;
+  color: inherit;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  background-image: none;
+}
+
+/** 保持Firefox浏览器默认焦点轮廓样式 */
+:-moz-focusring {
+  outline: auto;
+}
+
+/** 移除Firefox浏览器对无效表单元素的默认阴影 */
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/** 调整搜索框在获得焦点时的轮廓偏移量：向内收缩 */
+[type="search"] {
+  outline-offset: -2px;
+}
+
+/** 适配进度条与文字混排 */
+progress {
+  vertical-align: baseline;
+}
+
+/** 调整webkit内核浏览器（如Chrome、Safari）中数字输入框的上下箭头按钮高度 */
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/** 文件上传按钮字体样式继承父类 */
+::-webkit-file-upload-button {
+  font: inherit;
+}
+
+summary {
+  display: list-item;
+}
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  padding: 0;
+  margin: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+:disabled {
+  cursor: default;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+[hidden] {
+  display: none;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+label {
+  font-weight: 700;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+div:focus {
+  outline: none;
+}
+
+/** 清除浮动修复方案 */
+.clearfix {
+  &::after {
+    display: block;
+    height: 0;
+    clear: both;
+    font-size: 0;
+    visibility: hidden;
+    content: " ";
+  }
+}
