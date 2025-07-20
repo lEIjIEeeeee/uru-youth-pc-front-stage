@@ -3,8 +3,8 @@ import { createRouter, Router } from "vue-router";
 import publicRoutes from "./modules/public";
 import { getHistoryMode } from "./utils";
 import { usePageCacheStore } from "@/store/page-cache";
-import setTitle from "@/util/setTitle";
-import { getToken } from "@/util/auth";
+import setTitle from "@/utils/setTitle";
+import { getToken } from "@/utils/auth";
 
 /**
  * 自动导入静态路由，匹配路径：src/router/modules

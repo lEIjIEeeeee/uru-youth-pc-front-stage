@@ -185,8 +185,8 @@ class UruHttp {
     return new Promise((resolve, reject) => {
       UruHttp.axiosInstance
         .request(config)
-        .then((response: AxiosResponse<T>) => {
-          resolve(response.data);
+        .then((response: undefined) => {
+          resolve(response);
         })
         .catch((error) => {
           reject(error);

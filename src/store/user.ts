@@ -8,16 +8,16 @@ import {
   UserNameKey,
   UserTypeKey,
   type AuthDataInfo,
-} from "@/util/auth";
-import { storageSessionUtils } from "@/util/storageSession";
+} from "@/utils/auth";
+import { storageSessionUtils } from "@/utils/storageSession";
 import {
-  loginByAccount,
-  loginByPhoneCode,
+  passwordLoginApi,
+  phoneLoginApi,
   refreshToken,
   RefreshTokenResult,
 } from "@/api/user";
-import { getObj } from "@/util/getObj";
-import { SetObjMapType } from "@/util/setObj";
+import { getObj } from "@/utils/getObj";
+import { SetObjMapType } from "@/utils/setObj";
 
 const userInfoMap: SetObjMapType = {
   accessToken: "token",
@@ -59,11 +59,11 @@ export const userStore = defineStore("user", {
       this.permissons = permissons;
     },
     //手机验证码登录
-    async loginByPhoneCode(data: any) {
+    async loginByPhone(data: any) {
       return new Promise((resolve, reject) => {
-        loginByPhoneCode(
+        phoneLoginApi(
           getObj(data, {
-            phoneNumber: "phone",
+            phone: "phone",
             code: "code",
           })
         )
@@ -82,39 +82,33 @@ export const userStore = defineStore("user", {
       });
     },
     /** 账号（或手机号）密码登入 */
-    async loginByAccount(data: any) {
-      return new Promise((resolve, reject) => {
-        loginByAccount(
+    async loginByPassword(data: any) {
+      try {
+        const res = await passwordLoginApi(
           getObj(data, {
             account: "account",
             password: "password",
           })
-        )
-          .then((res) => {
-            setToken(
-              getObj(res, {
-                ...userInfoMap,
-              })
-            );
-            this.isLogin = true;
-            resolve(data);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+        );
+        setToken(getObj(res, { ...userInfoMap }));
+        this.isLogin = true;
+        return data;
+      } catch (error) {
+        console.log(error);
+        throw error;
+      }
     },
     /** 刷新token */
-    async handleRefreshToken(data:any) {
+    async handleRefreshToken(data: any) {
       return new Promise<RefreshTokenResult>((resolve, reject) => {
         refreshToken(data)
-          .then(data => {
+          .then((data) => {
             if (data) {
               setToken(data.data);
               resolve(data);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             reject(error);
           });
       });

@@ -1,4 +1,4 @@
-export const publicRoutes: RouteConfigsTable[] = [
+const publicRoutes: RouteConfigsTable[] = [
   {
     path: "/login",
     name: "Login",

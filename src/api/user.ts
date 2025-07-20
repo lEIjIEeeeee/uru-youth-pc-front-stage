@@ -1,4 +1,4 @@
-import { http } from "@/util/http";
+import { http } from "@/utils/http";
 import { apiBaseUrl } from "./common";
 
 export type RefreshTokenResult = {
@@ -12,14 +12,14 @@ export type RefreshTokenResult = {
   };
 };
 
-export const loginByPhoneCode = (data: any) => {
-  return http.request("post", apiBaseUrl("/authModule/login/login"), {
+export const phoneLoginApi = (data: any) => {
+  return http.request("post", apiBaseUrl("/authModule/login/loginByPhone"), {
     data,
   });
 };
 
-export const loginByAccount = (data: any) => {
-  return http.request("post", apiBaseUrl("/authModule/login/login"), {
+export const passwordLoginApi = (data: any) => {
+  return http.request("post", apiBaseUrl("/authModule/login/loginByPassword"), {
     data,
   });
 };
