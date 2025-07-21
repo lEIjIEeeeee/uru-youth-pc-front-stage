@@ -115,8 +115,9 @@ watchEffect(() => {
 const countDown = ref(0)
 const sendCodeBtnDisabled = computed(() => loading.value || !phoneLoginFormData.phone?.match(RegExp.phone))
 const codeInputRef = ref<InstanceType<typeof ElInput>>()
+const codeIsHover = ref(false)
 const handleSendCode = async () => {
-  if (sendCodeBtnDisabled.value) return
+  if (sendCodeBtnDisabled.value || countDown.value > 0) return
   try {
     await formRef.value.validateField('phone')
     //TODO 发送验证码
@@ -200,8 +201,9 @@ const handleBtnMouseDown = () => {
                 </el-input>
               </el-form-item>
               <el-form-item class="code-form-item" prop="code">
-                <el-input class="code-input" v-model="phoneLoginFormData.code" ref="codeInputRef" placeholder="验证码"
-                  clearable>
+                <el-input class="code-input h-full" :class="{ 'is-hover': codeIsHover }"
+                  v-model="phoneLoginFormData.code" ref="codeInputRef" placeholder="验证码" clearable
+                  @mouseenter="codeIsHover = true" @mouseleave="codeIsHover = false">
                   <template #prefix>
                     <el-icon size="20px">
                       <message />
@@ -209,9 +211,9 @@ const handleBtnMouseDown = () => {
                   </template>
                   <template #append>
                     <div
-                      class="w-[50px] h-[30px] flex justify-center items-center leading-[30px] cursor-pointer text-[#00a1d6]"
-                      :class="{ 'send-code-btn-disabled': sendCodeBtnDisabled }" @click.prevent="handleSendCode"
-                      @mousedown.prevent="handleBtnMouseDown" tabindex="-1">
+                      class="code-append w-[50px] h-full flex justify-center items-center leading-[30px] cursor-pointer text-[#00a1d6]"
+                      :class="{ 'send-code-btn-disabled': sendCodeBtnDisabled || countDown > 0 }"
+                      @click.prevent="handleSendCode" @mousedown.prevent="handleBtnMouseDown">
                       {{ countDown > 0 ? `${countDown}s后重试` : '获取验证码' }}
                     </div>
                   </template>
@@ -258,126 +260,99 @@ const handleBtnMouseDown = () => {
   cursor: not-allowed !important;
 }
 
-:deep(.el-input__wrapper) {
-  border-radius: 20px;
-  height: 40px;
-}
-
-
 $border-color: #dcdfe6;
 $border-color-hover: #c6cad1;
 $border-color-focus: #f1844a;
 $border-color-error: #f56c6c;
 
-/** 输入框默认边框 */
-:deep(.code-input .el-input__wrapper) {
-  border-radius: 20px 0 0 20px;
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color inset,
-    /** 左侧边框 */
-    1px 0 0 0 $border-color inset,
-    /** 右侧阴影 */
-    0 0 0 0 transparent;
+:deep(.el-input__wrapper) {
+  border-radius: 20px;
+  height: 40px;
+}
 
-  &.is-focus {
+.code-input {
+
+  /** 默认状态 */
+  &:deep(.el-input__wrapper) {
+    border-radius: 20px 0 0 20px;
     box-shadow:
-      /** 顶部边框 */
+      0 -1px 0 0 $border-color inset,
+      0 1px 0 0 $border-color inset,
+      1px 0 0 0 $border-color inset,
+      0 0 0 0 transparent;
+    transition: box-shadow 0.1s ease;
+  }
+
+  &:deep(.el-input-group__append) {
+    border-radius: 0 20px 20px 0;
+    padding: 0 20px;
+    box-shadow:
+      0 -1px 0 0 $border-color inset,
+      0 1px 0 0 $border-color inset,
+      0 0 0 0 transparent,
+      -1px 0 0 0 $border-color inset;
+    transition: box-shadow 0.1s ease;
+  }
+
+  /** 鼠标移入input输入框，激活hover状态 */
+  &.is-hover {
+    &:deep(.el-input__wrapper) {
+      box-shadow:
+        0 -1px 0 0 $border-color-hover inset,
+        0 1px 0 0 $border-color-hover inset,
+        1px 0 0 0 $border-color-hover inset,
+        0 0 0 0 transparent;
+      transition: box-shadow 0.1s ease;
+    }
+
+    &:deep(.el-input-group__append) {
+      box-shadow:
+        0 -1px 0 0 $border-color-hover inset,
+        0 1px 0 0 $border-color-hover inset,
+        0 0 0 0 transparent,
+        -1px 0 0 0 $border-color-hover inset;
+      transition: box-shadow 0.1s ease;
+    }
+  }
+
+  /** input输入框聚焦状态 */
+  &:deep(.el-input__wrapper.is-focus) {
+    box-shadow:
       0 -1px 0 0 $border-color-focus inset,
-      /** 底部边框 */
       0 1px 0 0 $border-color-focus inset,
-      /** 左侧边框 */
       1px 0 0 0 $border-color-focus inset,
-      /** 右侧阴影 */
-      0 0 0 0 transparent !important;
+      0 0 0 0 transparent;
+    transition: box-shadow 0.1s ease;
+  }
+
+  &:deep(.el-input__wrapper.is-focus + .el-input-group__append) {
+    box-shadow:
+      0 -1px 0 0 $border-color-focus inset,
+      0 1px 0 0 $border-color-focus inset,
+      0 0 0 0 transparent,
+      -1px 0 0 0 $border-color-focus inset;
+    transition: box-shadow 0.1s ease;
   }
 }
 
-/** append默认边框 */
-:deep(.code-input .el-input-group__append) {
-  background-color: transparent;
-  border-radius: 0 20px 20px 0;
-  padding: 0 20px;
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color inset,
-    /** 左侧边框 */
-    0 0 0 0 transparent,
-    /** 右侧阴影 */
-    -1px 0 0 0 $border-color inset;
-}
+.code-form-item.is-error {
+  &:deep(.el-input__wrapper, .el-input__wrapper:hover) {
+    box-shadow:
+      0 -1px 0 0 $border-color-error inset,
+      0 1px 0 0 $border-color-error inset,
+      1px 0 0 0 $border-color-error inset,
+      0 0 0 0 transparent !important;
+    transition: box-shadow 0.1s ease;
+  }
 
-/** 输入框激活状态hover */
-:deep(.code-form-item:not(.is-error) .code-input.el-input-group:hover .el-input__wrapper:not(.is-focus)) {
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color-hover inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color-hover inset,
-    /** 左侧边框 */
-    1px 0 0 0 $border-color-hover inset,
-    /** 右侧阴影 */
-    0 0 0 0 transparent;
-}
-
-/** append激活状态hover */
-:deep(.code-form-item:not(.is-error) .code-input.el-input-group:hover .el-input-group__append:not(.is-focus + *)) {
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color-hover inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color-hover inset,
-    /** 左侧边框 */
-    0 0 0 0 transparent,
-    /** 右侧阴影 */
-    -1px 0 0 0 $border-color-hover inset;
-}
-
-:deep(.code-input .el-input__wrapper),
-:deep(.code-input .el-input-group__append) {
-  transition: box-shadow 0.1s ease; // 添加入场过渡
-}
-
-/** append聚焦状态 */
-:deep(.code-form-item:not(.is-error) .code-input .el-input__wrapper.is-focus + .el-input-group__append) {
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color-focus inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color-focus inset,
-    /** 左侧边框 */
-    0 0 0 0 transparent,
-    /** 右侧阴影 */
-    -1px 0 0 0 $border-color-focus inset !important;
-}
-
-/** 输入框表单校验失败 */
-:deep(.code-form-item.is-error .el-input__wrapper) {
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color-error inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color-error inset,
-    /** 左侧边框 */
-    1px 0 0 0 $border-color-error inset,
-    /** 右侧阴影 */
-    0 0 0 0 transparent !important;
-}
-
-:deep(.code-form-item.is-error .el-input-group__append) {
-  box-shadow:
-    /** 顶部边框 */
-    0 -1px 0 0 $border-color-error inset,
-    /** 底部边框 */
-    0 1px 0 0 $border-color-error inset,
-    /** 左侧边框 */
-    0 0 0 0 transparent,
-    /** 右侧阴影 */
-    -1px 0 0 0 $border-color-error inset !important;
+  &:deep(.el-input-group__append, .el-input-group__append:hover) {
+    box-shadow:
+      0 -1px 0 0 $border-color-error inset,
+      0 1px 0 0 $border-color-error inset,
+      0 0 0 0 transparent,
+      -1px 0 0 0 $border-color-error inset !important;
+    transition: box-shadow 0.1s ease;
+  }
 }
 
 .send-code-btn-disabled {
