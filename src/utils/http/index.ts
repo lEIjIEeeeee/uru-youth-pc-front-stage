@@ -1,12 +1,12 @@
 import axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type AxiosResponse,
-  type CustomParamsSerializer,
+  AxiosInstance,
+  AxiosRequestConfig,
+  CustomParamsSerializer,
 } from "axios";
 import { stringify } from "qs";
-import type {
+import {
   RequestMethods,
+  UruHttpError,
   UruHttpRequestConfig,
   UruHttpResponse,
 } from "./type";
@@ -164,6 +164,39 @@ class UruHttp {
           return data;
         }
         return response.data;
+      },
+      (error: UruHttpError) => {
+        const $error = error;
+        $error.isCancelRequest = axios.isCancel($error);
+        const $config = $error.config as UruHttpRequestConfig;
+        // 关闭进度条动画
+        nProgress.done();
+        // 返回请求失败信息
+        let msg = "网络请求错误";
+        const _response = $error.response;
+        if (_response) {
+          const _data = _response.data as { message?: string };
+          if (_data && typeof _data === "object") {
+            msg = _data.message;
+          } else {
+            msg = `请求失败：${_response.status} ${_response.statusText}`;
+          }
+        } else {
+          msg = $error.message;
+        }
+
+        if (
+          !$error.isCancelRequest &&
+          $config.showMsg !== false &&
+          UruHttp.initConfig.showMsg !== false
+        ) {
+          ElMessage.error({
+            type: "error",
+            message: msg,
+          });
+        }
+        // 所有的响应异常 区分来源为取消请求/非取消请求
+        return Promise.reject($error);
       }
     );
   }

@@ -1,42 +1,30 @@
 <script lang="ts" setup>
 import { computed, reactive, ref, watchEffect } from 'vue';
-import { PasswordLoginRequest, LoginTypeEnum, PhoneLoginRequest } from './types';
-import { ElInput, FormInstance, FormRules } from 'element-plus';
+import { PasswordLoginRequest, LoginTypeEnum, PhoneLoginRequest, SendSmsCodeRequest } from './types';
+import { ElInput, ElMessage, FormInstance, FormRules } from 'element-plus';
 import { userStore } from '@/store/user';
 import router from '@/router';
 import useMainLoading from '@/hooks/useMainLoading';
 import RegExp from '@/utils/regexp';
+import { sendSmsCodeApi } from '@/api/user';
+import codeTimer from '@/utils/codeTimer';
 
 const { mainLoading, openMainLoading, closeMainLoading } = useMainLoading()
 const loading = computed(() => mainLoading.value)
 
-const currentTab = ref<LoginTypeEnum>(LoginTypeEnum.PWD)
-const pwdTab = computed(() => currentTab.value === LoginTypeEnum.PWD)
+const currentTab = ref<LoginTypeEnum>(LoginTypeEnum.SMS)
 const smsTab = computed(() => currentTab.value === LoginTypeEnum.SMS)
+const pwdTab = computed(() => currentTab.value === LoginTypeEnum.PWD)
 
 const switchTab = (tab: LoginTypeEnum) => {
   if (loading.value || currentTab.value === tab) return
   currentTab.value = tab
 }
 
-const passwordLoginFormData = reactive(new PasswordLoginRequest())
 const phoneLoginFormData = reactive(new PhoneLoginRequest())
+const passwordLoginFormData = reactive(new PasswordLoginRequest())
 const formRef = ref<FormInstance>();
 const rules: FormRules = {
-  account: [
-    {
-      required: true,
-      message: "请输入账号/手机号",
-      trigger: 'blur'
-    }
-  ],
-  password: [
-    {
-      required: true,
-      message: "请输入密码",
-      trigger: 'blur'
-    }
-  ],
   phone: [
     {
       required: true,
@@ -60,31 +48,30 @@ const rules: FormRules = {
       message: "请输入正确的验证码",
       trigger: "blur"
     }
-  ]
+  ],
+  account: [
+    {
+      required: true,
+      message: "请输入账号/手机号",
+      trigger: 'blur'
+    }
+  ],
+  password: [
+    {
+      required: true,
+      message: "请输入密码",
+      trigger: 'blur'
+    }
+  ],
 }
 
 const userLogin = async () => {
-  if (pwdTab.value) {
-    loginByPassword()
-  } else if (smsTab.value) {
+  if (smsTab.value) {
     loginByPhone()
+  } else if (pwdTab.value) {
+    loginByPassword()
   } else {
-    //TODO  message
-  }
-}
-
-const loginByPassword = async () => {
-  try {
-    openMainLoading()
-    await formRef.value.validate();
-    await userStore().loginByPassword(passwordLoginFormData)
-    router.push("/")
-    console.log("登录成功")
-    //TODO message
-  } catch (e) {
-    console.log(e)
-  } finally {
-    closeMainLoading()
+    ElMessage.error("登录异常")
   }
 }
 
@@ -94,8 +81,7 @@ const loginByPhone = async () => {
     await formRef.value.validate();
     await userStore().loginByPhone(phoneLoginFormData)
     router.push("/")
-    console.log("登录成功")
-    //TODO message
+    ElMessage.success("登录成功");
   } catch (e) {
     console.log(e)
   } finally {
@@ -103,42 +89,59 @@ const loginByPhone = async () => {
   }
 }
 
-watchEffect(() => {
-  if (pwdTab.value) {
-    Object.assign(passwordLoginFormData, new PasswordLoginRequest())
+const loginByPassword = async () => {
+  try {
+    openMainLoading()
+    await formRef.value.validate();
+    await userStore().loginByPassword(passwordLoginFormData)
+    router.push("/")
+    ElMessage.success("登录成功")
+  } catch (e) {
+    console.log(e)
+  } finally {
+    closeMainLoading()
   }
-  if (smsTab.value) {
-    Object.assign(phoneLoginFormData, new PhoneLoginRequest())
-  }
-})
+}
 
-const countDown = ref(0)
-const sendCodeBtnDisabled = computed(() => loading.value || !phoneLoginFormData.phone?.match(RegExp.phone))
 const codeInputRef = ref<InstanceType<typeof ElInput>>()
 const codeIsHover = ref(false)
+
+const { second, loading: codeTimerLoading, isDisabled: codeTimerDisabled, startTimer } = codeTimer()
+const sendBtnColor = computed(() => phoneLoginFormData.phone?.match(RegExp.phone) && !codeTimerDisabled.value)
+const sendCodeBtnDisabled = computed(() => loading.value || codeTimerLoading.value || codeTimerDisabled.value || !phoneLoginFormData.phone?.match(RegExp.phone))
+
 const handleSendCode = async () => {
-  if (sendCodeBtnDisabled.value || countDown.value > 0) return
   try {
-    await formRef.value.validateField('phone')
-    //TODO 发送验证码
-    console.log("验证码发送成功")
-    countDown.value = 60
-    const timer = setInterval(() => {
-      countDown.value--
-      if (countDown.value <= 0) {
-        clearInterval(timer)
-      }
-    }, 1000)
+    if (sendCodeBtnDisabled.value) return
+    await startTimer(sendSmsCode, 60)
   } catch (e) {
-    console.log("验证码发送失败", e)
+    console.log(e)
   } finally {
     codeInputRef.value?.focus()
   }
 }
 
+const sendSmsCodeRequest = reactive(new SendSmsCodeRequest())
+const sendSmsCode = async () => {
+  await formRef.value.validateField('phone')
+  sendSmsCodeRequest.phone = phoneLoginFormData.phone;
+  sendSmsCodeRequest.scene = "login"
+  await sendSmsCodeApi(sendSmsCodeRequest);
+  ElMessage.success("发送成功")
+}
+
 const handleBtnMouseDown = () => {
   codeInputRef.value?.focus()
 }
+
+watchEffect(() => {
+  if (smsTab.value) {
+    Object.assign(phoneLoginFormData, new PhoneLoginRequest())
+  }
+  if (pwdTab.value) {
+    Object.assign(passwordLoginFormData, new PasswordLoginRequest())
+  }
+})
 </script>
 
 <template>
@@ -152,23 +155,57 @@ const handleBtnMouseDown = () => {
           <span class="font-comic font-semibold text-4xl text-orange-500">Uru</span>
           <span class="font-semibold text-2xl ml-4px">芳华帖后台管理</span>
         </div>
+        <!-- 登录方式 -->
         <div class="mt-[40px]">
           <div class="flex items-start text-[18px] text-[#505050] leading-[18px] mb-[24px]">
-            <div class="cursor-pointer pb-[8px]"
-              :class="{ 'tab-active': pwdTab, 'pwd-tab-disabled': loading && !pwdTab }"
-              @click="switchTab(LoginTypeEnum.PWD)">
-              账号登录
-            </div>
-            <div class="w-[1px] h-[18px] bg-[#e3e5e7] mx-[20px]"></div>
             <div class="cursor-pointer pb-[8px]"
               :class="{ 'tab-active': smsTab, 'sms-tab-disabled': loading && !smsTab }"
               @click="switchTab(LoginTypeEnum.SMS)">
               短信登录
             </div>
+            <div class="w-[1px] h-[18px] bg-[#e3e5e7] mx-[20px]"></div>
+            <div class="cursor-pointer pb-[8px]"
+              :class="{ 'tab-active': pwdTab, 'pwd-tab-disabled': loading && !pwdTab }"
+              @click="switchTab(LoginTypeEnum.PWD)">
+              账号登录
+            </div>
           </div>
-          <!-- 账号密码登录表单 -->
           <el-form :model="pwdTab ? passwordLoginFormData : smsTab ? phoneLoginFormData : undefined" ref="formRef"
             :rules="rules" :disabled="loading">
+            <!-- 短信登录表单 -->
+            <div v-if="smsTab">
+              <el-form-item prop="phone">
+                <el-input v-model="phoneLoginFormData.phone" placeholder="手机号" clearable>
+                  <template #prefix>
+                    <el-icon size="20px">
+                      <iphone />
+                    </el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+              <el-form-item class="code-form-item" prop="code">
+                <el-input class="code-input h-full  overflow-hidden" :class="{ 'is-hover': codeIsHover }"
+                  v-model="phoneLoginFormData.code" ref="codeInputRef" placeholder="验证码" clearable
+                  @mouseenter="codeIsHover = true" @mouseleave="codeIsHover = false">
+                  <template #prefix>
+                    <el-icon size="20px">
+                      <message />
+                    </el-icon>
+                  </template>
+                  <template #append>
+                    <div class="w-[70px] h-full flex justify-center items-center leading-[30px]">
+                      <el-button class="cursor-pointer"
+                        :class="{ 'send-code-btn-disabled': sendCodeBtnDisabled, '!text-[#00a1d6]': sendBtnColor }"
+                        @click.prevent="handleSendCode" @mousedown.prevent="handleBtnMouseDown"
+                        :loading="codeTimerLoading">
+                        {{ codeTimerLoading ? null : second > 0 ? `${second}s后重试` : '获取验证码' }}
+                      </el-button>
+                    </div>
+                  </template>
+                </el-input>
+              </el-form-item>
+            </div>
+            <!-- 密码登录表单 -->
             <div v-if="pwdTab">
               <el-form-item prop="account">
                 <el-input v-model="passwordLoginFormData.account" placeholder="账号" clearable>
@@ -190,38 +227,8 @@ const handleBtnMouseDown = () => {
                 </el-input>
               </el-form-item>
             </div>
-            <div v-if="smsTab">
-              <el-form-item prop="phone">
-                <el-input v-model="phoneLoginFormData.phone" placeholder="手机号" clearable>
-                  <template #prefix>
-                    <el-icon size="20px">
-                      <iphone />
-                    </el-icon>
-                  </template>
-                </el-input>
-              </el-form-item>
-              <el-form-item class="code-form-item" prop="code">
-                <el-input class="code-input h-full" :class="{ 'is-hover': codeIsHover }"
-                  v-model="phoneLoginFormData.code" ref="codeInputRef" placeholder="验证码" clearable
-                  @mouseenter="codeIsHover = true" @mouseleave="codeIsHover = false">
-                  <template #prefix>
-                    <el-icon size="20px">
-                      <message />
-                    </el-icon>
-                  </template>
-                  <template #append>
-                    <div
-                      class="code-append w-[50px] h-full flex justify-center items-center leading-[30px] cursor-pointer text-[#00a1d6]"
-                      :class="{ 'send-code-btn-disabled': sendCodeBtnDisabled || countDown > 0 }"
-                      @click.prevent="handleSendCode" @mousedown.prevent="handleBtnMouseDown">
-                      {{ countDown > 0 ? `${countDown}s后重试` : '获取验证码' }}
-                    </div>
-                  </template>
-                </el-input>
-              </el-form-item>
-            </div>
           </el-form>
-          <div class="mt-[20px]">
+          <div class=" mt-[20px]">
             <el-button class="w-full login-btn" type="primary" round @click="userLogin" :loading="loading">
               登录
             </el-button>
@@ -271,6 +278,8 @@ $border-color-error: #f56c6c;
 }
 
 .code-input {
+  position: relative;
+  overflow: hidden;
 
   /** 默认状态 */
   &:deep(.el-input__wrapper) {
@@ -284,8 +293,10 @@ $border-color-error: #f56c6c;
   }
 
   &:deep(.el-input-group__append) {
+    width: 94px;
+    background-color: #fff;
     border-radius: 0 20px 20px 0;
-    padding: 0 20px;
+    padding: 0 12px;
     box-shadow:
       0 -1px 0 0 $border-color inset,
       0 1px 0 0 $border-color inset,
@@ -355,9 +366,21 @@ $border-color-error: #f56c6c;
   }
 }
 
+.code-input :deep(.el-input-group__append::before) {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  background-color: $border-color;
+  width: 1px;
+  height: 60%;
+  transform: translateY(-50%);
+
+}
+
 .send-code-btn-disabled {
   cursor: not-allowed;
-  color: currentColor;
+  color: $border-color;
 }
 
 .login-btn {

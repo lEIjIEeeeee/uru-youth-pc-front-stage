@@ -24,16 +24,14 @@ export const passwordLoginApi = (data: any) => {
   });
 };
 
-export const refreshToken = (data?: any) => {
-  return http.request<RefreshTokenResult>("post", apiBaseUrl("/refreshToken"), {
+export const sendSmsCodeApi = (data: any) => {
+  return http.request("post", apiBaseUrl("/authModule/login/sendSmsCode"), {
     data,
   });
 };
 
-export const init = (id: number) => {
-  return http.request("get", apiBaseUrl("/demoModule/demo/get"), {
-    params: {
-      id,
-    },
+export const refreshToken = (data?: any) => {
+  return http.request<RefreshTokenResult>("post", apiBaseUrl("/refreshToken"), {
+    data,
   });
 };

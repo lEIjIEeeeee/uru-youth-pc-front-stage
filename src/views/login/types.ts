@@ -1,14 +1,19 @@
 export enum LoginTypeEnum {
-  PWD = "pwd",
   SMS = "sms",
+  PWD = "pwd",
 }
 
 export class PasswordLoginRequest {
-  account: "";
-  password: "";
+  account: string;
+  password: string;
 }
 
 export class PhoneLoginRequest {
-  phone: "";
-  code: "";
+  phone: string;
+  code: string;
+}
+
+export class SendSmsCodeRequest {
+  phone: string;
+  scene: string;
 }
